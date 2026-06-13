@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>پیام‌رسان</title>
+<style>
+  :root {
+    --bg: #0e1117;
+    --surface: #161b22;
+    --surface2: #1c2333;
+    --border: #30363d;
+    --accent: #2ea4e0;
+    --accent2: #1a7db5;
+    --text: #e6edf3;
+    --muted: #8b949e;
+    --green: #3fb950;
+    --bubble-me: #1a4a6e;
+    --bubble-them: #1c2333;
+    --sidebar-w: 280px;
+    --header-h: 60px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    height: 100dvh;
+    display: flex;
+    overflow: hidden;
+  }
+
+  /* ===== SIDEBAR ===== */
+  #sidebar {
+    width: var(--sidebar-w);
+    background: var(--surface);
+    border-left: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    transition: transform .3s;
+    z-index: 10;
+  }
+  .sidebar-header {
+    padding: 16px;
+    background: var(--surface2);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .app-logo {
+    width: 36px; height: 36px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+  .app-name { font-weight: 700; font-size: 17px; }
+  .user-tag { font-size: 12px; color: var(--muted); }
+
+  .rooms-label {
+    padding: 12px 16px 6px;
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .room-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    cursor: pointer;
+    border-radius: 8px;
+    margin: 2px 8px;
+    transition: background .15s;
+  }
+  .room-item:hover { background: var(--surface2); }
+  .room-item.active {
+    background: rgba(46,164,224,.15);
+    border: 1px solid rgba(46,164,224,.3);
+  }
+  .room-icon {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+  .room-info { flex: 1; min-width: 0; }
+  .room-name { font-size: 14px; font-weight: 600; }
+  .room-preview { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .room-badge {
+    background: var(--accent);
+    color: #fff;
+    border-radius: 10px;
+    padding: 2px 7px;
+    font-size: 11px;
+    font-weight: 700;
+  }
+
+  .online-section {
+    padding: 12px 16px;
+    border-top: 1px solid var(--border);
+    margin-top: auto;
+  }
+  .online-label { font-size: 11px; color: var(--muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; }
+  .online-list { display: flex; flex-wrap: wrap; gap: 6px; }
+  .online-chip {
+    background: var(--surface2);
+    border-radius: 12px;
+    padding: 4px 10px;
+    font-size: 12px;
+    display: flex; align-items: center; gap: 5px;
+  }
+  .online-dot { width: 7px; height: 7px; background: var(--green); border-radius: 50%; }
+
+  /* ===== MAIN CHAT ===== */
+  #chat-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  #chat-header {
+    height: var(--header-h);
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    gap: 14px;
+  }
+  #menu-btn {
+    display: none;
+    background: none;
+    border: none;
+    color: var(--text);
+    font-size: 22px;
+    cursor: pointer;
+    padding: 4px 8px;
+  }
+  .room-avatar {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+  }
+  .header-info { flex: 1; }
+  .header-room { font-weight: 700; font-size: 16px; }
+  .header-status { font-size: 12px; color: var(--muted); }
+  .header-actions { display: flex; gap: 8px; }
+  .icon-btn {
+    background: none; border: none;
+    color: var(--muted);
+    font-size: 20px;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 8px;
+    transition: color .15s, background .15s;
+  }
+  .icon-btn:hover { color: var(--text); background: var(--surface2); }
+
+  /* ===== MESSAGES ===== */
+  #messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    scroll-behavior: smooth;
+  }
+  #messages::-webkit-scrollbar { width: 5px; }
+  #messages::-webkit-scrollbar-track { background: transparent; }
+  #messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  .msg-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    animation: fadeUp .2s ease;
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .msg-row.me { flex-direction: row-reverse; }
+
+  .msg-avatar {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+    flex-shrink: 0;
+    margin-bottom: 2px;
+  }
+  .bubble {
+    max-width: 65%;
+    padding: 10px 14px;
+    border-radius: 18px;
+    line-height: 1.5;
+    font-size: 14px;
+    position: relative;
+    word-break: break-word;
+  }
+  .msg-row:not(.me) .bubble {
+    background: var(--bubble-them);
+    border-bottom-right-radius: 4px;
+  }
+  .msg-row.me .bubble {
+    background: var(--bubble-me);
+    border-bottom-left-radius: 4px;
+  }
+  .bubble-name {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 4px;
+  }
+  .bubble-text { }
+  .bubble-time {
+    font-size: 10px;
+    color: var(--muted);
+    margin-top: 4px;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    justify-content: flex-end;
+  }
+  .tick { color: var(--accent); font-size: 12px; }
+
+  .system-msg {
+    text-align: center;
+    font-size: 12px;
+    color: var(--muted);
+    padding: 8px 16px;
+    margin: 8px 0;
+  }
+  .system-msg span {
+    background: var(--surface2);
+    padding: 4px 14px;
+    border-radius: 12px;
+  }
+
+  /* تایپ */
+  #typing-indicator {
+    padding: 0 16px 8px;
+    font-size: 12px;
+    color: var(--muted);
+    height: 22px;
+    transition: opacity .2s;
+  }
+
+  /* ===== INPUT ===== */
+  #input-bar {
+    padding: 12px 16px;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+  #msg-input {
+    flex: 1;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 22px;
+    padding: 10px 18px;
+    color: var(--text);
+    font-size: 14px;
+    font-family: inherit;
+    outline: none;
+    resize: none;
+    line-height: 1.4;
+    max-height: 120px;
+    transition: border-color .2s;
+    direction: auto;
+  }
+  #msg-input:focus { border-color: var(--accent); }
+  #msg-input::placeholder { color: var(--muted); }
+  #send-btn {
+    width: 44px; height: 44px;
+    background: var(--accent);
+    border: none;
+    border-radius: 50%;
+    color: #fff;
+    font-size: 18px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background .15s, transform .1s;
+    flex-shrink: 0;
+  }
+  #send-btn:hover { background: var(--accent2); }
+  #send-btn:active { transform: scale(.9); }
+
+  /* ===== LOGIN ===== */
+  #login-screen {
+    position: fixed;
+    inset: 0;
+    background: var(--bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    padding: 20px;
+  }
+  .login-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 40px 32px;
+    width: 100%;
+    max-width: 380px;
+    text-align: center;
+  }
+  .login-logo {
+    width: 72px; height: 72px;
+    background: linear-gradient(135deg, var(--accent), #5b4fcf);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 36px;
+    margin: 0 auto 20px;
+  }
+  .login-title { font-size: 24px; font-weight: 700; margin-bottom: 6px; }
+  .login-sub { color: var(--muted); font-size: 14px; margin-bottom: 28px; }
+  .login-input {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 13px 16px;
+    color: var(--text);
+    font-size: 15px;
+    font-family: inherit;
+    outline: none;
+    margin-bottom: 12px;
+    text-align: center;
+    transition: border-color .2s;
+  }
+  .login-input:focus { border-color: var(--accent); }
+  .login-label { font-size: 13px; color: var(--muted); margin-bottom: 6px; text-align: right; }
+  .login-btn {
+    width: 100%;
+    background: linear-gradient(135deg, var(--accent), #5b4fcf);
+    border: none;
+    border-radius: 12px;
+    padding: 14px;
+    color: #fff;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    margin-top: 4px;
+    transition: opacity .2s, transform .1s;
+    font-family: inherit;
+  }
+  .login-btn:hover { opacity: .9; }
+  .login-btn:active { transform: scale(.98); }
+  .server-row { display: flex; gap: 8px; margin-bottom: 12px; }
+  .server-row .login-input { margin-bottom: 0; flex: 1; }
+  .conn-status { font-size: 12px; margin-top: 14px; }
+  .conn-ok { color: var(--green); }
+  .conn-err { color: #f85149; }
+
+  /* ===== OVERLAY MOBILE ===== */
+  #sidebar-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.5);
+    z-index: 9;
+  }
+
+  /* ===== RESPONSIVE ===== */
+  @media (max-width: 640px) {
+    #sidebar {
+      position: fixed;
+      top: 0; right: 0;
+      height: 100%;
+      transform: translateX(100%);
+    }
+    #sidebar.open { transform: translateX(0); }
+    #sidebar-overlay.open { display: block; }
+    #menu-btn { display: block; }
+    #chat-area { width: 100%; }
+  }
+
+  /* اتاق‌های رنگی */
+  .color-blue { background: rgba(46,164,224,.2); }
+  .color-purple { background: rgba(91,79,207,.2); }
+  .color-green { background: rgba(63,185,80,.2); }
+  .color-orange { background: rgba(230,162,60,.2); }
+
+  /* آواتار کاربر */
+  .av-blue { background: #1a4a6e; }
+  .av-purple { background: #3a2d7a; }
+  .av-green { background: #1a4a2e; }
+  .av-red { background: #5a1a1a; }
+  .av-teal { background: #1a4a4a; }
+</style>
+</head>
+<body>
+
+<!-- صفحه ورود -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">✈️</div>
+    <div class="login-title">پیام‌رسان</div>
+    <div class="login-sub">وارد شوید و گفتگو کنید</div>
+
+    <div class="login-label">نام کاربری</div>
+    <input class="login-input" id="username-input" placeholder="نام خود را وارد کنید" maxlength="20">
+
+    <div class="login-label">آدرس سرور</div>
+    <div class="server-row">
+      <input class="login-input" id="server-input" placeholder="localhost یا IP" value="messenger-production-1797.up.railway.app">
+      <input class="login-input" id="port-input" placeholder="پورت" value="443" style="max-width:80px">
+    </div>
+
+    <button class="login-btn" onclick="connect()">ورود به پیام‌رسان 🚀</button>
+    <div class="conn-status" id="conn-status"></div>
+  </div>
+</div>
+
+<!-- نوار کناری -->
+<div id="sidebar-overlay" onclick="toggleSidebar()"></div>
+<div id="sidebar">
+  <div class="sidebar-header">
+    <div class="app-logo">✈️</div>
+    <div>
+      <div class="app-name">پیام‌رسان</div>
+      <div class="user-tag" id="my-username-tag">@کاربر</div>
+    </div>
+  </div>
+
+  <div class="rooms-label">اتاق‌های گفتگو</div>
+  <div id="rooms-list"></div>
+
+  <div class="online-section">
+    <div class="online-label">آنلاین در این اتاق</div>
+    <div class="online-list" id="online-list"></div>
+  </div>
+</div>
+
+<!-- ناحیه چت -->
+<div id="chat-area">
+  <div id="chat-header">
+    <button id="menu-btn" onclick="toggleSidebar()">☰</button>
+    <div class="room-avatar color-blue" id="header-icon">💬</div>
+    <div class="header-info">
+      <div class="header-room" id="header-room">اتاق عمومی</div>
+      <div class="header-status" id="header-status">در حال اتصال...</div>
+    </div>
+    <div class="header-actions">
+      <button class="icon-btn" title="جستجو">🔍</button>
+      <button class="icon-btn" title="اطلاعات">ℹ️</button>
+    </div>
+  </div>
+
+  <div id="messages"></div>
+  <div id="typing-indicator"></div>
+
+  <div id="input-bar">
+    <button class="icon-btn">😊</button>
+    <textarea id="msg-input" rows="1" placeholder="پیام بنویسید..."></textarea>
+    <button id="send-btn" onclick="sendMessage()">➤</button>
+  </div>
+</div>
+
+<script>
+let ws = null;
+let myUsername = '';
+let currentRoom = 'عمومی';
+let typingTimer = null;
+let unreadCounts = {};
+let typingTimeout = null;
+
+const ROOM_ICONS = {
+  'عمومی': { icon: '🌍', color: 'color-blue' },
+  'فناوری': { icon: '💻', color: 'color-purple' },
+  'موزیک': { icon: '🎵', color: 'color-green' },
+};
+const DEFAULT_ROOM = { icon: '💬', color: 'color-orange' };
+
+const AVATAR_COLORS = ['av-blue','av-purple','av-green','av-red','av-teal'];
+function getAvatarColor(name) {
+  let sum = 0;
+  for (let c of name) sum += c.charCodeAt(0);
+  return AVATAR_COLORS[sum % AVATAR_COLORS.length];
+}
+function getInitials(name) {
+  return name.slice(0, 1).toUpperCase();
+}
+
+function connect() {
+  const username = document.getElementById('username-input').value.trim();
+  const server = document.getElementById('server-input').value.trim() || 'localhost';
+  const port = document.getElementById('port-input').value.trim() || '8765';
+
+  if (!username) {
+    document.getElementById('conn-status').innerHTML = '<span class="conn-err">❌ نام کاربری وارد کنید</span>';
+    return;
+  }
+
+  myUsername = username;
+  const isSecure = port === '443' || server.includes('railway.app') || server.includes('onrender.com');
+  const url = isSecure ? `wss://${server}` : `ws://${server}:${port}`;
+  document.getElementById('conn-status').innerHTML = '<span style="color:var(--muted)">⏳ در حال اتصال...</span>';
+
+  ws = new WebSocket(url);
+
+  ws.onopen = () => {
+    ws.send(JSON.stringify({ type: 'join', username, room: 'عمومی' }));
+    document.getElementById('conn-status').innerHTML = '<span class="conn-ok">✅ متصل شد!</span>';
+    setTimeout(() => {
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('my-username-tag').textContent = '@' + username;
+      document.getElementById('msg-input').focus();
+    }, 500);
+  };
+
+  ws.onmessage = (e) => {
+    const data = JSON.parse(e.data);
+    handleMessage(data);
+  };
+
+  ws.onerror = () => {
+    document.getElementById('conn-status').innerHTML = '<span class="conn-err">❌ خطا در اتصال - سرور را بررسی کنید</span>';
+  };
+
+  ws.onclose = () => {
+    document.getElementById('header-status').textContent = '🔴 اتصال قطع شد';
+  };
+}
+
+function handleMessage(data) {
+  if (data.type === 'history') {
+    currentRoom = data.room;
+    document.getElementById('messages').innerHTML = '';
+    renderRooms(data.rooms);
+    data.messages.forEach(addMessage);
+    updateHeader();
+    scrollToBottom();
+  }
+  else if (data.type === 'message') {
+    if (data.room === currentRoom) {
+      addMessage(data);
+      scrollToBottom();
+    } else {
+      unreadCounts[data.room] = (unreadCounts[data.room] || 0) + 1;
+      renderRooms(Object.keys(ROOM_ICONS));
+    }
+  }
+  else if (data.type === 'system') {
+    if (data.room === currentRoom) {
+      addSystemMessage(data.text);
+      scrollToBottom();
+    }
+    document.getElementById('header-status').textContent = `${countOnline()} نفر آنلاین`;
+  }
+  else if (data.type === 'users') {
+    if (data.room === currentRoom) {
+      renderOnlineUsers(data.users);
+    }
+  }
+  else if (data.type === 'typing') {
+    if (data.room === currentRoom && data.username !== myUsername) {
+      showTyping(data.username);
+    }
+  }
+}
+
+function addMessage(data) {
+  const isMe = data.username === myUsername;
+  const msgs = document.getElementById('messages');
+
+  const row = document.createElement('div');
+  row.className = 'msg-row' + (isMe ? ' me' : '');
+
+  const avColor = getAvatarColor(data.username);
+  const initial = getInitials(data.username);
+
+  const tickHtml = isMe ? '<span class="tick">✓✓</span>' : '';
+
+  row.innerHTML = `
+    <div class="msg-avatar ${avColor}">${initial}</div>
+    <div class="bubble">
+      ${!isMe ? `<div class="bubble-name">${esc(data.username)}</div>` : ''}
+      <div class="bubble-text">${esc(data.text)}</div>
+      <div class="bubble-time">${data.time} ${tickHtml}</div>
+    </div>
+  `;
+  msgs.appendChild(row);
+}
+
+function addSystemMessage(text) {
+  const msgs = document.getElementById('messages');
+  const div = document.createElement('div');
+  div.className = 'system-msg';
+  div.innerHTML = `<span>${esc(text)}</span>`;
+  msgs.appendChild(div);
+}
+
+function renderRooms(rooms) {
+  const list = document.getElementById('rooms-list');
+  list.innerHTML = '';
+  rooms.forEach(room => {
+    const info = ROOM_ICONS[room] || DEFAULT_ROOM;
+    const isActive = room === currentRoom;
+    const badge = unreadCounts[room] ? `<span class="room-badge">${unreadCounts[room]}</span>` : '';
+
+    const item = document.createElement('div');
+    item.className = 'room-item' + (isActive ? ' active' : '');
+    item.innerHTML = `
+      <div class="room-icon ${info.color}">${info.icon}</div>
+      <div class="room-info">
+        <div class="room-name">${esc(room)}</div>
+        <div class="room-preview">${isActive ? '● فعال' : 'کلیک برای ورود'}</div>
+      </div>
+      ${badge}
+    `;
+    item.onclick = () => switchRoom(room);
+    list.appendChild(item);
+  });
+}
+
+function switchRoom(room) {
+  if (room === currentRoom) {
+    toggleSidebar(false);
+    return;
+  }
+  unreadCounts[room] = 0;
+  ws.send(JSON.stringify({ type: 'switch_room', room }));
+  toggleSidebar(false);
+}
+
+function renderOnlineUsers(users) {
+  const list = document.getElementById('online-list');
+  list.innerHTML = users.map(u =>
+    `<div class="online-chip"><div class="online-dot"></div>${esc(u)}</div>`
+  ).join('');
+  document.getElementById('header-status').textContent = `${users.length} نفر آنلاین`;
+}
+
+function countOnline() {
+  return document.getElementById('online-list').children.length;
+}
+
+function updateHeader() {
+  const info = ROOM_ICONS[currentRoom] || DEFAULT_ROOM;
+  document.getElementById('header-room').textContent = currentRoom;
+  document.getElementById('header-icon').textContent = info.icon;
+  document.getElementById('header-icon').className = `room-avatar ${info.color}`;
+}
+
+function showTyping(username) {
+  const el = document.getElementById('typing-indicator');
+  el.textContent = `${username} در حال تایپ...`;
+  clearTimeout(typingTimeout);
+  typingTimeout = setTimeout(() => el.textContent = '', 2500);
+}
+
+function sendMessage() {
+  const input = document.getElementById('msg-input');
+  const text = input.value.trim();
+  if (!text || !ws) return;
+  ws.send(JSON.stringify({ type: 'message', text }));
+  input.value = '';
+  input.style.height = 'auto';
+  input.focus();
+}
+
+function scrollToBottom() {
+  const msgs = document.getElementById('messages');
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function esc(str) {
+  return String(str)
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;');
+}
+
+function toggleSidebar(force) {
+  const sb = document.getElementById('sidebar');
+  const ov = document.getElementById('sidebar-overlay');
+  const shouldOpen = force !== undefined ? force : !sb.classList.contains('open');
+  sb.classList.toggle('open', shouldOpen);
+  ov.classList.toggle('open', shouldOpen);
+}
+
+// ارسال با Enter
+document.getElementById('msg-input').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+});
+
+// تایپ
+document.getElementById('msg-input').addEventListener('input', function() {
+  this.style.height = 'auto';
+  this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+
+  if (ws) {
+    clearTimeout(typingTimer);
+    ws.send(JSON.stringify({ type: 'typing' }));
+    typingTimer = setTimeout(() => {}, 2000);
+  }
+});
+
+// Enter در ورود
+document.getElementById('username-input').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') connect();
+});
+</script>
+</body>
+</html>
