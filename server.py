@@ -193,8 +193,9 @@ async def main():
     http_thread.start()
 
     # شروع WebSocket server
-    async with websockets.serve(handler, "0.0.0.0", 8765):
-        print("⚡ WebSocket روی پورت 8765 آماده است")
+    port = int(os.environ.get("PORT", 8765))
+    async with websockets.serve(handler, "0.0.0.0", port):
+        print(f"⚡ WebSocket روی پورت {port} آماده است")
         print()
         print("📱 آدرس‌های اتصال:")
         print("   مرورگر همین دستگاه: http://localhost:8080/client.html")
